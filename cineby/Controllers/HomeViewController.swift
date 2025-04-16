@@ -9,7 +9,7 @@ import UIKit
 
 class HomeViewController: UIViewController {
     
-    let sectionTitles = ["Trending Movies" , "Popular" ,"Trending Tv","Upcoming Movies", "Top Rated"]
+    let sectionTitles = ["Trending Movies","Trending Tv","Popular","Upcoming Movies", "Top Rated"]
     
     private let homeFeedTable: UITableView = {
         let table = UITableView(frame: .zero, style: .grouped)
@@ -21,7 +21,6 @@ class HomeViewController: UIViewController {
         view.backgroundColor = .systemBackground
         view.addSubview(homeFeedTable)
         configureNavBar()
-        getTrendingMovies()
         homeFeedTable.delegate = self
         homeFeedTable.dataSource = self
         homeFeedTable.tableHeaderView = HeroHeaderView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
@@ -40,32 +39,6 @@ class HomeViewController: UIViewController {
             UIBarButtonItem(image: UIImage(systemName: "person"), style: .done, target: self, action: nil),
             UIBarButtonItem(image: UIImage(systemName: "play.rectangle"), style: .done, target: self, action: nil)
         ]
-    }
-    
-    private func getTrendingMovies() {
-//        APICaller.shared.getTrendingMovies { result in
-//            switch result {
-//            case .success(let movie):
-//                print(movie)
-//                
-//            case .failure(let error):
-//                print(error)
-//            }
-//        }
-//        
-//        APICaller.shared.getTrendingTvs { result in
-//            switch result {
-//            case .success(let tv):
-//                print(tv)
-//                
-//            case .failure(let error):
-//                print(error)
-//            }
-//        }
-        
-        APICaller.shared.getTopRatedMovies { _ in
-            
-        }
     }
 
 }
@@ -94,6 +67,55 @@ extension HomeViewController : UITableViewDelegate , UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CollectionViewTableViewCell.identifier, for: indexPath) as? CollectionViewTableViewCell else{
             return UITableViewCell()
         }
+        switch indexPath.section {
+        case Sections.TrendingMovie.rawValue:
+            APICaller.shared.getTrendingMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.TrendingTv.rawValue:
+            APICaller.shared.getTrendingTvs { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.Popular.rawValue:
+            APICaller.shared.getPopularMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.Upcoming.rawValue:
+            APICaller.shared.getUpComingMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        case Sections.TopRated.rawValue:
+            APICaller.shared.getTopRatedMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        default:
+            return cell
+        }
         return cell
     }
     
@@ -110,4 +132,13 @@ extension HomeViewController : UITableViewDelegate , UITableViewDataSource {
         let offset = scrollView.contentOffset.y + defaultOffSet
         navigationController?.navigationBar.transform = .init(translationX: 0, y: min(0,-offset))
     }
+}
+
+
+enum Sections: Int {
+    case TrendingMovie = 0
+    case TrendingTv = 1
+    case Popular = 2
+    case Upcoming = 3
+    case TopRated = 4
 }

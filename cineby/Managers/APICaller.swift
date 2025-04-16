@@ -60,11 +60,10 @@ class APICaller {
             guard let data = data , error == nil else {return}
             
             do {
-                let results = try JSONDecoder().decode(Title.self , from: data)
-                print(results)
+                let results = try JSONDecoder().decode(TrendingTitleResponse.self , from: data)
+                completion(.success(results.results))
             }catch {
-                print(APIError.failedToFetchData)
-            }
+                completion(.failure(APIError.failedToFetchData))            }
         }
         task.resume()
     }
@@ -76,10 +75,10 @@ class APICaller {
             
             do {
                 let results = try JSONDecoder().decode(TrendingTitleResponse.self , from: data)
-                print(results)
+                completion(.success(results.results))
                 
             }catch {
-                print(APIError.failedToFetchData)
+                completion(.failure(APIError.failedToFetchData))
             }
         }
         task.resume()
@@ -92,9 +91,9 @@ class APICaller {
             
             do {
                 let results = try JSONDecoder().decode(TrendingTitleResponse.self , from: data)
-                print(results)
+                completion(.success(results.results))
             }catch {
-                print(APIError.failedToFetchData)
+                completion(.failure(APIError.failedToFetchData))
             }
         }
         task.resume()
