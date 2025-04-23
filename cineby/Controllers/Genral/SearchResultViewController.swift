@@ -7,9 +7,15 @@
 
 import UIKit
 
+protocol SearchResultViewControllerDelegate: AnyObject {
+    func searchResultViewControllerDidTap(viewmodel: TitlePreviewViewModel)
+}
+
 class SearchResultViewController: UIViewController {
 
     public var titles: [Title] = [Title]()
+    
+    weak var delegate: SearchResultViewControllerDelegate?
     
     public let searchCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -44,6 +50,20 @@ extension SearchResultViewController: UICollectionViewDelegate , UICollectionVie
         let searchPosterUrl = titles[indexPath.row].poster_path
         cell.configure(imageUrl: searchPosterUrl ?? "")
         return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        let title = titles[indexPath.row]
+        let titleName = title.original_title ?? title.original_name ?? ""
+        APICaller.shared.searchMovie(query: titleName) { [weak self] result in
+            switch result {
+            case .success(let videoElement):
+                self?.delegate?.searchResultViewControllerDidTap(viewmodel: TitlePreviewViewModel(title: titleName, youtubeView: videoElement, titleOverview: title.overview ?? ""))
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
     }
     
 }

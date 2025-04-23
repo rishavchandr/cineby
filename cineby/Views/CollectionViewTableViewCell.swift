@@ -7,9 +7,15 @@
 
 import UIKit
 
+protocol CollectionViewTableViewCelldelegate: AnyObject {
+    func  collectionViewTableViewCellDidSelect(_ cell: CollectionViewTableViewCell , viewModel: TitlePreviewViewModel)
+}
+
 class CollectionViewTableViewCell: UITableViewCell {
     
     static let  identifier = "CollectionViewTableViewCell"
+    
+    weak var delegate: CollectionViewTableViewCelldelegate?
     
     private var titles: [Title] = [Title]()
     
@@ -45,6 +51,17 @@ class CollectionViewTableViewCell: UITableViewCell {
             self?.homeCollectionView.reloadData()
         }
     }
+    
+    private func downloadTitle(at indexpath: IndexPath){
+        DataPersistenceManager.shared.downloadTitleWith(with: titles[indexpath.row]) { result in
+            switch result {
+            case .success():
+                NotificationCenter.default.post(name: Notification.Name("download"), object: nil)
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
+    }
 }
 
 
@@ -69,10 +86,13 @@ extension CollectionViewTableViewCell: UICollectionViewDelegate , UICollectionVi
         let title = titles[indexPath.row]
         guard let titleName = title.original_title ?? title.original_name else {return}
         
-        APICaller.shared.searchMovie(query: titleName + "trailer") { results in
+        APICaller.shared.searchMovie(query: titleName + "trailer") { [weak self] results in
             switch results {
             case .success(let videoElement):
-                print(videoElement.id)
+                guard let strongSelf = self else {return}
+                guard let titleOverview = self?.titles[indexPath.row].overview else {return}
+                let viewModel = TitlePreviewViewModel(title: titleName, youtubeView: videoElement, titleOverview: titleOverview)
+                self?.delegate?.collectionViewTableViewCellDidSelect(strongSelf, viewModel: viewModel)
             case .failure(let error):
                 print(error.localizedDescription)
             }
@@ -80,5 +100,15 @@ extension CollectionViewTableViewCell: UICollectionViewDelegate , UICollectionVi
         }
     }
     
-    
+    func collectionView(_ collectionView: UICollectionView , contextMenuConfigurationForItemAt indexPath: IndexPath , point: CGPoint) -> UIContextMenuConfiguration? {
+        let config = UIContextMenuConfiguration(
+            identifier: nil
+            ,previewProvider: nil) { [weak self] _ in
+                let downloadAction = UIAction(title: "Download" , subtitle: nil , image: nil , identifier: nil , discoverabilityTitle: nil , state: .off) { _ in
+                    self?.downloadTitle(at: indexPath)
+                }
+                return UIMenu(title: "" , image: nil , identifier: nil ,options: .displayInline , children: [downloadAction])
+            }
+        return config
+    }
 }

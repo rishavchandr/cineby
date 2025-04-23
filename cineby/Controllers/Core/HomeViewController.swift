@@ -11,6 +11,9 @@ class HomeViewController: UIViewController {
     
     let sectionTitles = ["Trending Movies","Trending Tv","Popular","Upcoming Movies", "Top Rated"]
     
+    private var randomTrendingMovies: Title?
+    private var heroheaderView: HeroHeaderView?
+    
     private let homeFeedTable: UITableView = {
         let table = UITableView(frame: .zero, style: .grouped)
         table.register(CollectionViewTableViewCell.self ,forCellReuseIdentifier: CollectionViewTableViewCell.identifier)
@@ -23,7 +26,23 @@ class HomeViewController: UIViewController {
         configureNavBar()
         homeFeedTable.delegate = self
         homeFeedTable.dataSource = self
-        homeFeedTable.tableHeaderView = HeroHeaderView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
+        heroheaderView = HeroHeaderView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
+        homeFeedTable.tableHeaderView = heroheaderView
+        configureTrendingMovie()
+        
+    }
+    
+    func configureTrendingMovie() {
+        APICaller.shared.getTrendingMovies { [weak self] result in
+            switch result {
+            case .success(let titles):
+                let selectedTitle = titles.randomElement()
+                self?.randomTrendingMovies = selectedTitle
+                self?.heroheaderView?.headerViewConfigure(with: TitleViewModel(titleName: selectedTitle?.original_name ?? "", posterUrlL: selectedTitle?.poster_path ?? ""))
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
+        }
     }
     
     override func viewDidLayoutSubviews() {
@@ -67,6 +86,8 @@ extension HomeViewController : UITableViewDelegate , UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CollectionViewTableViewCell.identifier, for: indexPath) as? CollectionViewTableViewCell else{
             return UITableViewCell()
         }
+        
+        cell.delegate = self
         switch indexPath.section {
         case Sections.TrendingMovie.rawValue:
             APICaller.shared.getTrendingMovies { result in
@@ -131,6 +152,17 @@ extension HomeViewController : UITableViewDelegate , UITableViewDataSource {
         let defaultOffSet = view.safeAreaInsets.top
         let offset = scrollView.contentOffset.y + defaultOffSet
         navigationController?.navigationBar.transform = .init(translationX: 0, y: min(0,-offset))
+    }
+}
+
+
+extension HomeViewController: CollectionViewTableViewCelldelegate {
+    func collectionViewTableViewCellDidSelect(_ cell: CollectionViewTableViewCell, viewModel: TitlePreviewViewModel) {
+        DispatchQueue.main.async { [weak self] in
+            let vc = TitlePreviewViewController()
+            vc.configure(with: viewModel)
+            self?.navigationController?.pushViewController(vc, animated: true)
+        }
     }
 }
 

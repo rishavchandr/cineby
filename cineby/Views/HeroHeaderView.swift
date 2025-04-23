@@ -32,7 +32,6 @@ class HeroHeaderView: UIView {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.image = UIImage(named: "heroImage")
         return imageView
     }()
     
@@ -67,6 +66,9 @@ class HeroHeaderView: UIView {
         ])
     }
     
+    public func headerViewConfigure(with model: TitleViewModel){
+        heroImageView.loadImage(urlString: "https://image.tmdb.org/t/p/w500/\(model.posterUrlL)")
+    }
     required init?(coder: NSCoder) {
         fatalError()
     }
